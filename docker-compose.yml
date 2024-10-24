@@ -1,0 +1,24 @@
+services:
+  db:
+    image: lanterndata/lantern-self-hosted:lantern-0.4.1-extras-0.4.1-minor-1
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_PORT: 5432
+      POSTGRESQL_PASSWORD: postgres
+      LANTERN_AUTO_INIT: yes
+    ports:
+      - 5432:5432
+      - 6432:6432
+    volumes:
+      - db_storage:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db_storage:
+    driver: local
