@@ -15,8 +15,8 @@ Lantern is also [open-source](https://github.com/lanterndata/lantern), so you ca
 Set the following environment variables in your `.env` file:
 
 - `DATABASE_URL`
-- `OPENAI_API_KEY`
 - `UBICLOUD_API_KEY`
+- `OPENAI_API_KEY`
 
 Next, load the environment variables
 
@@ -91,7 +91,7 @@ SELECT add_completion_job(
     'code',                -- source column
     'description',         -- output column
                            -- system prompt
-    'This is a file from a codebase. "Please provide a detailed summary of the key concepts, structure, and important points in this file. Focus on organizing the information in a way that allows for specific follow-up questions, highlighting sections, key terms, and their relationships where possible.',
+    'You are a helpful code assistant. You will receive code from a file, and you will summarize what that the code does, including specific interfaces where helpful.',
     'TEXT',                -- output type
     'gpt-4o',              -- model
     50                     -- batch size
@@ -101,7 +101,7 @@ SELECT add_completion_job(
 Ubicloud
 
 ```bash
-psql "$DATABASE_URL" -c "SELECT add_completion_job('files', 'code', 'description', '', 'TEXT', 'llama-3-2-3b-it', 50, 'openai', runtime_params=>'{\"base_url\": \"https://llama-3-2-3b-it.ai.ubicloud.com\", \"api_token\": \"$UBICLOUD_API_KEY\", \"context\": \"This is a file from a codebase. Please provide a detailed summary of the key concepts, structure, and important points in this file. Focus on organizing the information in a way that allows for specific follow-up questions, highlighting sections, key terms, and their relationships where possible.\" }')"
+psql "$DATABASE_URL" -c "SELECT add_completion_job('files', 'code', 'description', '', 'TEXT', 'llama-3-2-3b-it', 50, 'openai', runtime_params=>'{\"base_url\": \"https://llama-3-2-3b-it.ai.ubicloud.com\", \"api_token\": \"$UBICLOUD_API_KEY\", \"context\": \"You are a helpful code assistant. You will receive code from a file, and you will summarize what that the code does, including specific interfaces where helpful.\" }')"
 ```
 
 ## Step 5: Initialize the embedding generation job
@@ -114,7 +114,7 @@ SELECT add_embedding_job(
     'description',                   -- source column
     'vector',                        -- output column
     'openai/text-embedding-3-small', -- model
-    'openai'                         -- provider
+    50                               -- batch size
 );
 ```
 
@@ -124,11 +124,13 @@ Ubicloud
 psql "$DATABASE_URL" -c "SELECT add_embedding_job('files', 'description', 'vector', 'e5-mistral-7b-it', 50, 'openai', runtime_params=>'{\"base_url\": \"https://e5-mistral-7b-it.ai.ubicloud.com\", \"api_token\": \"$UBICLOUD_API_KEY\"}')"
 ```
 
-## Step 6: Look at our data
+## Step 6: Sanity checks
 
 ```bash
-psql "$DATABASE_URL" -c "SELECT name, description FROM files LIMIT 5"
-psql "$DATABASE_URL" -c "SELECT name, vector FROM files LIMIT 5"
+psql "$DATABASE_URL" -c "SELECT get_completion_jobs()"
+psql "$DATABASE_URL" -c "SELECT get_embedding_jobs()"
+psql "$DATABASE_URL" -c "SELECT name, description FROM files WHERE description IS NOT NULL LIMIT 1"
+psql "$DATABASE_URL" -c "SELECT name, vector FROM files WHERE vector IS NOT NULL LIMIT 1"
 ```
 
 ## Step 7: Run the chatbot to ask questions
@@ -136,3 +138,8 @@ psql "$DATABASE_URL" -c "SELECT name, vector FROM files LIMIT 5"
 ```bash
 python app.py ubicloud
 ```
+
+Some sample questions you can ask:
+
+- What embedding models does Ubicloud support?
+- How do I enable TLS with the Ubicloud load balancer?
