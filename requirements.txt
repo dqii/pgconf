@@ -1,0 +1,3 @@
+python-dotenv
+gradio
+psycopg2-binary

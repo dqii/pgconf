@@ -1,5 +1,6 @@
 repos/
 .env
 .venv
+venv
 temp.md
 __pycache__

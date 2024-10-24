@@ -49,14 +49,7 @@ def query_files(repo, question, top_k=10):
 def ask_question(repo, question):
     files = query_files(repo, question)
 
-    system_prompt = (
-        f"You are an expert assistant for analyzing the code repository '{repo}'. "
-        f"Your role is to provide accurate and concise answers to questions based on the relevant context provided. "
-        f"The context consists of the file names and descriptions that relate to the user's question. "
-        f"Use the context to enhance your answer but do not include unnecessary details. "
-        f"Only use information from the context if it directly contributes to answering the question. "
-        f"If the context is not helpful for a particular question, respond based on general knowledge or indicate that more context is needed."
-    )
+    system_prompt = f"You are a helpful agent who answers questions about the {repo} codebase. You will be given context about the codebase and asked questions about it. Please provide detailed answers to the best of your ability."
 
     context = ""
     file_count = len(files)
@@ -65,7 +58,13 @@ def ask_question(repo, question):
         context += f"FILE {i+1} / {file_count}: {name}\n{description}\n\n"
     if not context:
         return "No relevant information found to answer your question."
-    user_prompt = f"QUESTION: {question}\nCONTEXT: {context}"
+    user_prompt = '\n'.join([
+        f"Answer the question about the {repo} repo using the provided context. Cite specific portions of the given context if they were relevant to answering the question.",
+        '-------------------------------',
+        f"QUESTION: {question}",
+        '-------------------------------',
+        f"CONTEXT: {context}"
+    ])
 
     if PROVIDER == 'openai':
         query = "SELECT llm_completion(%s, %s, %s)"
