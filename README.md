@@ -15,8 +15,8 @@ Lantern is also [open-source](https://github.com/lanterndata/lantern), so you ca
 Set the following environment variables in your `.env` file:
 
 - `DATABASE_URL`
-- `UBICLOUD_API_KEY`
-- `OPENAI_API_KEY`
+- `UBICLOUD_API_KEY` (If using Ubicloud for embedding generation and LLM completions)
+- `OPENAI_API_KEY` (If using OpenAI for embedding generation and LLM completions)
 
 Next, load the environment variables
 
@@ -39,16 +39,16 @@ SELECT pg_reload_conf();
 
 Finally, set the database environment variables.
 
-OpenAI:
-
-```bash
-psql "$DATABASE_URL" -c "ALTER DATABASE postgres SET lantern_extras.openai_token='$OPENAI_API_KEY'"
-```
-
 Ubicloud:
 
 ```bash
 psql "$DATABASE_URL" -c "ALTER DATABASE postgres SET lantern_extras.openai_token='$UBICLOUD_API_KEY'"
+```
+
+OpenAI:
+
+```bash
+psql "$DATABASE_URL" -c "ALTER DATABASE postgres SET lantern_extras.openai_token='$OPENAI_API_KEY'"
 ```
 
 ## Step 2: Database schema
@@ -83,6 +83,12 @@ python process_repo.py ubicloud
 
 Initialize the LLM completion job:
 
+Ubicloud
+
+```bash
+psql "$DATABASE_URL" -c "SELECT add_completion_job('files', 'code', 'description', '', 'TEXT', 'llama-3-2-3b-it', 50, 'openai', runtime_params=>'{\"base_url\": \"https://llama-3-2-3b-it.ai.ubicloud.com\", \"api_token\": \"$UBICLOUD_API_KEY\", \"context\": \"You are a helpful code assistant. You will receive code from a file, and you will summarize what that the code does, including specific interfaces where helpful.\" }')"
+```
+
 OpenAI
 
 ```sql
@@ -98,13 +104,13 @@ SELECT add_completion_job(
 );
 ```
 
+## Step 5: Initialize the embedding generation job
+
 Ubicloud
 
 ```bash
-psql "$DATABASE_URL" -c "SELECT add_completion_job('files', 'code', 'description', '', 'TEXT', 'llama-3-2-3b-it', 50, 'openai', runtime_params=>'{\"base_url\": \"https://llama-3-2-3b-it.ai.ubicloud.com\", \"api_token\": \"$UBICLOUD_API_KEY\", \"context\": \"You are a helpful code assistant. You will receive code from a file, and you will summarize what that the code does, including specific interfaces where helpful.\" }')"
+psql "$DATABASE_URL" -c "SELECT add_embedding_job('files', 'description', 'vector', 'e5-mistral-7b-it', 50, 'openai', runtime_params=>'{\"base_url\": \"https://e5-mistral-7b-it.ai.ubicloud.com\", \"api_token\": \"$UBICLOUD_API_KEY\"}')"
 ```
-
-## Step 5: Initialize the embedding generation job
 
 OpenAI
 
@@ -116,12 +122,6 @@ SELECT add_embedding_job(
     'openai/text-embedding-3-small', -- model
     50                               -- batch size
 );
-```
-
-Ubicloud
-
-```bash
-psql "$DATABASE_URL" -c "SELECT add_embedding_job('files', 'description', 'vector', 'e5-mistral-7b-it', 50, 'openai', runtime_params=>'{\"base_url\": \"https://e5-mistral-7b-it.ai.ubicloud.com\", \"api_token\": \"$UBICLOUD_API_KEY\"}')"
 ```
 
 ## Step 6: Sanity checks
