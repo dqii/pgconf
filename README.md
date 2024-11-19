@@ -42,14 +42,16 @@ Finally, set the database environment variables.
 Ubicloud:
 
 ```bash
-psql "$DATABASE_URL" -c "ALTER DATABASE postgres SET lantern_extras.openai_token='$UBICLOUD_API_KEY'"
+psql "$DATABASE_URL" -c "ALTER DATABASE postgres SET lantern_extras.llm_token='$UBICLOUD_API_KEY'"
 ```
 
 OpenAI:
 
 ```bash
-psql "$DATABASE_URL" -c "ALTER DATABASE postgres SET lantern_extras.openai_token='$OPENAI_API_KEY'"
+psql "$DATABASE_URL" -c "ALTER DATABASE postgres SET lantern_extras.llm_token='$OPENAI_API_KEY'"
 ```
+
+If you are using both Ubicloud and OpenAI, you can set the `api_token` variable in the `add_completion_job` and `add_embedding_job` functions to the appropriate API key.
 
 ## Step 2: Database schema
 
@@ -81,26 +83,33 @@ python process_repo.py ubicloud
 
 ## Step 4: Initialize the LLM completion job
 
-Initialize the LLM completion job:
+### Initialize the LLM completion job in SQL
+
+Note: If you are using both Ubicloud and OpenAI, you can set the `api_token` variable in the `add_completion_job` function to the appropriate API key.
 
 Ubicloud
 
-```bash
-psql "$DATABASE_URL" -c "SELECT add_completion_job('files', 'code', 'description', '', 'TEXT', 'llama-3-2-3b-it', 50, 'openai', runtime_params=>'{\"base_url\": \"https://llama-3-2-3b-it.ai.ubicloud.com\", \"api_token\": \"$UBICLOUD_API_KEY\", \"context\": \"You are a helpful code assistant. You will receive code from a file, and you will summarize what that the code does, including specific interfaces where helpful.\" }')"
+```sql
+SELECT add_completion_job(
+    'files',
+    src_column => 'code',
+    dst_column => 'description',
+    system_prompt => 'You are a helpful code assistant. You will receive code from a file, and you will summarize what that the code does, including specific interfaces where helpful.',
+    model => 'llama-3-2-3b-it',
+    base_url => 'https://llama-3-2-3b-it.ai.ubicloud.com'
+);
 ```
 
 OpenAI
 
 ```sql
 SELECT add_completion_job(
-    'files',               -- table
-    'code',                -- source column
-    'description',         -- output column
-                           -- system prompt
-    'You are a helpful code assistant. You will receive code from a file, and you will summarize what that the code does, including specific interfaces where helpful.',
-    'TEXT',                -- output type
-    'gpt-4o',              -- model
-    50                     -- batch size
+    'files',
+    src_column => 'code',
+    dst_column => 'description',
+    system_prompt => 'You are a helpful code assistant. You will receive code from a file, and you will summarize what that the code does, including specific interfaces where helpful.',
+    model => 'gpt-4o'
+    api_key => 'YOUR_API_KEY_HERE'
 );
 ```
 
@@ -108,8 +117,15 @@ SELECT add_completion_job(
 
 Ubicloud
 
-```bash
-psql "$DATABASE_URL" -c "SELECT add_embedding_job('files', 'description', 'vector', 'e5-mistral-7b-it', 50, 'openai', runtime_params=>'{\"base_url\": \"https://e5-mistral-7b-it.ai.ubicloud.com\", \"api_token\": \"$UBICLOUD_API_KEY\"}')"
+```sql
+SELECT add_embedding_job(
+    'files',                  -- table
+    'description',            -- source column
+    'vector',                 -- output column
+    'llama-3-2-3b-it',        -- model
+    base_url => 'https://llama-3-2-3b-it.ai.ubicloud.com',
+    batch_size => 50
+);
 ```
 
 OpenAI
@@ -120,9 +136,11 @@ SELECT add_embedding_job(
     'description',                   -- source column
     'vector',                        -- output column
     'openai/text-embedding-3-small', -- model
-    50                               -- batch size
+    batch_size => 50                 -- batch size
 );
 ```
+
+Note: As before, if you are using both Ubicloud and OpenAI, you can set the `api_token` variable in the `add_embedding_job` function to the appropriate API key.
 
 ## Step 6: Sanity checks
 
