@@ -1,6 +1,6 @@
 services:
   db:
-    image: lanterndata/lantern-self-hosted:lantern-0.5.0-extras-0.5.0-minor-alpha1
+    image: lanterndata/lantern-self-hosted:lantern-0.5.0-extras-0.5.0-minor-1
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
@@ -14,7 +14,7 @@ services:
     volumes:
       - db_storage:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5

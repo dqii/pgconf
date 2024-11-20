@@ -91,9 +91,9 @@ Ubicloud
 
 ```sql
 SELECT add_completion_job(
-    'files',
+    table_name => 'files',
     src_column => 'code',
-    dst_column => 'description',
+    dst_column => 'description2',
     system_prompt => 'You are a helpful code assistant. You will receive code from a file, and you will summarize what that the code does, including specific interfaces where helpful.',
     model => 'llama-3-2-3b-it',
     base_url => 'https://llama-3-2-3b-it.ai.ubicloud.com'
@@ -104,7 +104,7 @@ OpenAI
 
 ```sql
 SELECT add_completion_job(
-    'files',
+    table_name => 'files',
     src_column => 'code',
     dst_column => 'description',
     system_prompt => 'You are a helpful code assistant. You will receive code from a file, and you will summarize what that the code does, including specific interfaces where helpful.',
